@@ -88,5 +88,104 @@
 
 }
 
+- (NSString *)reapplyPerspectiveCropToImage:(NSString *)base64Image 
+                            withCoordinates:(NSDictionary *)coordinates 
+                                    quality:(float)quality {
+    @try {
+        // Decode base64 to UIImage
+        NSData *imageData = [[NSData alloc] initWithBase64EncodedString:base64Image options:0];
+        if (!imageData) {
+            return nil;
+        }
+        
+        UIImage *originalImage = [UIImage imageWithData:imageData];
+        if (!originalImage) {
+            return nil;
+        }
+        
+        // Fix orientation if needed
+        if (originalImage.imageOrientation != UIImageOrientationUp) {
+            UIGraphicsBeginImageContextWithOptions(originalImage.size, false, originalImage.scale);
+            [originalImage drawInRect:CGRectMake(0, 0, originalImage.size.width, originalImage.size.height)];
+            originalImage = UIGraphicsGetImageFromCurrentImageContext();
+            UIGraphicsEndImageContext();
+        }
+        
+        CIImage *ciImage = [CIImage imageWithCGImage:originalImage.CGImage];
+        
+        // Extract coordinates from dictionary
+        // Stored format (portrait view with y/x swapped):
+        // topLeft: {y: bottomLeft.x + 30, x: bottomLeft.y}
+        // topRight: {y: topLeft.x + 30, x: topLeft.y}
+        // bottomLeft: {y: bottomRight.x, x: bottomRight.y}
+        // bottomRight: {y: topRight.x, x: topRight.y}
+        
+        NSDictionary *topLeftDict = coordinates[@"topLeft"];
+        NSDictionary *topRightDict = coordinates[@"topRight"];
+        NSDictionary *bottomLeftDict = coordinates[@"bottomLeft"];
+        NSDictionary *bottomRightDict = coordinates[@"bottomRight"];
+        
+        if (!topLeftDict || !topRightDict || !bottomLeftDict || !bottomRightDict) {
+            return nil;
+        }
+        
+        // Extract stored values
+        double storedTopLeftY = [topLeftDict[@"y"] doubleValue];
+        double storedTopLeftX = [topLeftDict[@"x"] doubleValue];
+        double storedTopRightY = [topRightDict[@"y"] doubleValue];
+        double storedTopRightX = [topRightDict[@"x"] doubleValue];
+        double storedBottomLeftY = [bottomLeftDict[@"y"] doubleValue];
+        double storedBottomLeftX = [bottomLeftDict[@"x"] doubleValue];
+        double storedBottomRightY = [bottomRightDict[@"y"] doubleValue];
+        double storedBottomRightX = [bottomRightDict[@"x"] doubleValue];
+        
+        // Reverse the transformation to get back to landscape CIRectangleFeature format:
+        // From stored topLeft {y, x} where y = bottomLeft.x + 30, x = bottomLeft.y
+        // We get: bottomLeft.x = y - 30, bottomLeft.y = x
+        // From stored topRight {y, x} where y = topLeft.x + 30, x = topLeft.y
+        // We get: topLeft.x = y - 30, topLeft.y = x
+        // From stored bottomLeft {y, x} where y = bottomRight.x, x = bottomRight.y
+        // We get: bottomRight.x = y, bottomRight.y = x
+        // From stored bottomRight {y, x} where y = topRight.x, x = topRight.y
+        // We get: topRight.x = y, topRight.y = x
+        
+        // Reconstruct landscape CIRectangleFeature points
+        CGPoint landscapeTopLeft = CGPointMake(storedTopRightY - 30, storedTopRightX);
+        CGPoint landscapeTopRight = CGPointMake(storedBottomRightY, storedBottomRightX);
+        CGPoint landscapeBottomLeft = CGPointMake(storedTopLeftY - 30, storedTopLeftX);
+        CGPoint landscapeBottomRight = CGPointMake(storedBottomLeftY, storedBottomLeftX);
+        
+        // Apply perspective correction using the same method as correctPerspectiveForImage
+        // This adds +30 offset to left points
+        NSMutableDictionary *rectangleCoordinates = [NSMutableDictionary new];
+        CGPoint newLeft = CGPointMake(landscapeTopLeft.x + 30, landscapeTopLeft.y);
+        CGPoint newRight = CGPointMake(landscapeTopRight.x, landscapeTopRight.y);
+        CGPoint newBottomLeft = CGPointMake(landscapeBottomLeft.x + 30, landscapeBottomLeft.y);
+        CGPoint newBottomRight = CGPointMake(landscapeBottomRight.x, landscapeBottomRight.y);
+        
+        rectangleCoordinates[@"inputTopLeft"] = [CIVector vectorWithCGPoint:newLeft];
+        rectangleCoordinates[@"inputTopRight"] = [CIVector vectorWithCGPoint:newRight];
+        rectangleCoordinates[@"inputBottomLeft"] = [CIVector vectorWithCGPoint:newBottomLeft];
+        rectangleCoordinates[@"inputBottomRight"] = [CIVector vectorWithCGPoint:newBottomRight];
+        
+        CIImage *correctedImage = [ciImage imageByApplyingFilter:@"CIPerspectiveCorrection" withInputParameters:rectangleCoordinates];
+        
+        // Convert CIImage to UIImage
+        CIContext *context = [CIContext contextWithOptions:nil];
+        CGImageRef cgImage = [context createCGImage:correctedImage fromRect:correctedImage.extent];
+        UIImage *finalImage = [UIImage imageWithCGImage:cgImage];
+        CGImageRelease(cgImage);
+        
+        // Convert to base64
+        NSData *finalImageData = UIImageJPEGRepresentation(finalImage, quality);
+        NSString *base64Result = [finalImageData base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
+        
+        return base64Result;
+    }
+    @catch (NSException *exception) {
+        NSLog(@"Error in reapplyPerspectiveCropToImage: %@", exception.reason);
+        return nil;
+    }
+}
 
 @end

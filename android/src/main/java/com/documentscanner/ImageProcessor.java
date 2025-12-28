@@ -414,6 +414,104 @@ public class ImageProcessor extends Handler {
     }
 
     /**
+     * Static method to re-apply perspective transform to an image
+     * @param originalImage The original image Mat
+     * @param coordinates Array of 4 points in order: [topLeft, topRight, bottomRight, bottomLeft]
+     *                    These are in originalPoints format from ScannedDocument
+     * @param quality Quality parameter (not used in current implementation, but kept for API consistency)
+     * @return Processed Mat with perspective correction applied
+     */
+    public static Mat reapplyPerspectiveTransform(Mat originalImage, Point[] coordinates, double quality) {
+        if (originalImage == null || originalImage.empty() || coordinates == null || coordinates.length != 4) {
+            return null;
+        }
+
+        try {
+            // The coordinates are stored as originalPoints which are in transformed coordinate space
+            // originalPoints[0] = topLeft = Point(widthWithRatio - quad.points[3].y, quad.points[3].x)
+            // originalPoints[1] = topRight = Point(widthWithRatio - quad.points[0].y, quad.points[0].x)
+            // originalPoints[2] = bottomRight = Point(widthWithRatio - quad.points[1].y, quad.points[1].x)
+            // originalPoints[3] = bottomLeft = Point(widthWithRatio - quad.points[2].y, quad.points[2].x)
+            
+            // To reverse this transformation and get back to quad.points format:
+            // We need widthWithRatio which is calculated as: originalSize.height / ratio
+            double ratio = originalImage.size().height / 500;
+            int widthWithRatio = Double.valueOf(originalImage.size().height / ratio).intValue();
+            
+            // Reverse the transformation to get quad.points
+            // From originalPoints[i] = Point(widthWithRatio - quad.points[j].y, quad.points[j].x)
+            // We get: quad.points[j].y = widthWithRatio - originalPoints[i].x
+            //         quad.points[j].x = originalPoints[i].y
+            
+            // The mapping is:
+            // coordinates[0] (topLeft) came from quad.points[3]
+            // coordinates[1] (topRight) came from quad.points[0]
+            // coordinates[2] (bottomRight) came from quad.points[1]
+            // coordinates[3] (bottomLeft) came from quad.points[2]
+            
+            Point[] quadPoints = new Point[4];
+            // Reverse: quad.points[j].y = widthWithRatio - originalPoints[i].x
+            //          quad.points[j].x = originalPoints[i].y
+            quadPoints[3] = new Point(coordinates[0].y, widthWithRatio - coordinates[0].x); // topLeft -> quad[3]
+            quadPoints[0] = new Point(coordinates[1].y, widthWithRatio - coordinates[1].x); // topRight -> quad[0]
+            quadPoints[1] = new Point(coordinates[2].y, widthWithRatio - coordinates[2].x); // bottomRight -> quad[1]
+            quadPoints[2] = new Point(coordinates[3].y, widthWithRatio - coordinates[3].x); // bottomLeft -> quad[2]
+            
+            // Now quadPoints are in the same format as what fourPointTransform expects
+            // fourPointTransform expects: [topLeft, topRight, bottomRight, bottomLeft]
+            // After sortPoints, quad.points are: [0]=topLeft, [1]=topRight, [2]=bottomRight, [3]=bottomLeft
+            // But our quadPoints mapping gives us a different order, so we need to reorder:
+            Point tl = quadPoints[3]; // topLeft
+            Point tr = quadPoints[0]; // topRight
+            Point br = quadPoints[1]; // bottomRight
+            Point bl = quadPoints[2]; // bottomLeft
+            
+            // Now apply fourPointTransform logic (same as existing method)
+            double widthA = Math.sqrt(Math.pow(br.x - bl.x, 2) + Math.pow(br.y - bl.y, 2));
+            double widthB = Math.sqrt(Math.pow(tr.x - tl.x, 2) + Math.pow(tr.y - tl.y, 2));
+
+            double dw = Math.max(widthA, widthB) * ratio;
+            int maxWidth = Double.valueOf(dw).intValue();
+
+            double heightA = Math.sqrt(Math.pow(tr.x - br.x, 2) + Math.pow(tr.y - br.y, 2));
+            double heightB = Math.sqrt(Math.pow(tl.x - bl.x, 2) + Math.pow(tl.y - bl.y, 2));
+
+            double dh = Math.max(heightA, heightB) * ratio;
+            int maxHeight = Double.valueOf(dh).intValue();
+
+            Mat doc = new Mat(maxHeight, maxWidth, CvType.CV_8UC4);
+
+            Mat src_mat = new Mat(4, 1, CvType.CV_32FC2);
+            Mat dst_mat = new Mat(4, 1, CvType.CV_32FC2);
+
+            src_mat.put(0, 0, tl.x * ratio, tl.y * ratio, tr.x * ratio, tr.y * ratio, br.x * ratio, br.y * ratio,
+                    bl.x * ratio, bl.y * ratio);
+            dst_mat.put(0, 0, 0.0, 0.0, dw, 0.0, dw, dh, 0.0, dh);
+
+            Mat m = Imgproc.getPerspectiveTransform(src_mat, dst_mat);
+
+            Imgproc.warpPerspective(originalImage, doc, m, doc.size());
+
+            // Apply enhancement (grayscale conversion, contrast, brightness)
+            // Use default values for enhancement
+            double defaultGain = 1.0; // contrast
+            double defaultBias = 10.0; // brightness
+            Imgproc.cvtColor(doc, doc, Imgproc.COLOR_RGBA2GRAY);
+            doc.convertTo(doc, CvType.CV_8UC1, defaultGain, defaultBias);
+
+            // Release temporary Mats
+            src_mat.release();
+            dst_mat.release();
+            m.release();
+
+            return doc;
+        } catch (Exception e) {
+            Log.e("ImageProcessor", "Error in reapplyPerspectiveTransform: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * When a pixel have any of its three elements above the threshold value and the
      * average of the three values are less than 80% of the higher one, brings all
      * three values to the max possible keeping the relation between them, any

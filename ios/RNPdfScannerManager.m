@@ -37,6 +37,28 @@ RCT_EXPORT_METHOD(capture) {
     [_scannerView capture];
 }
 
+RCT_EXPORT_METHOD(reapplyPerspectiveCrop:(NSString *)base64Image
+                  coordinates:(NSDictionary *)coordinates
+                  quality:(float)quality
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+    // Process image on background queue to avoid blocking UI
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSString *result = [_scannerView reapplyPerspectiveCropToImage:base64Image 
+                                                       withCoordinates:coordinates 
+                                                               quality:quality];
+        // Return result on main queue
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (result) {
+                resolve(result);
+            } else {
+                reject(@"CROP_ERROR", @"Failed to reapply perspective crop", nil);
+            }
+        });
+    });
+}
+
 - (UIView*) view {
     _scannerView = [[DocumentScannerView alloc] init];
     return _scannerView;

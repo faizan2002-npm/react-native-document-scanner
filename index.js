@@ -108,6 +108,8 @@ class PdfScanner extends React.Component {
           this.props.detectionCountBeforeCapture || 5
         }
         detectionRefreshRateInMS={this.props.detectionRefreshRateInMS || 50}
+        captureMultiple={this.props.captureMultiple !== undefined ? this.props.captureMultiple : true}
+        useBase64={this.props.useBase64 !== undefined ? this.props.useBase64 : true}
       />
     );
   }
@@ -128,6 +130,8 @@ PdfScanner.propTypes = {
   documentAnimation: PropTypes.bool,
   noGrayScale: PropTypes.bool,
   manualOnly: PropTypes.bool,
+  captureMultiple: PropTypes.bool,
+  useBase64: PropTypes.bool,
   ...View.propTypes // include the default view properties
 };
 

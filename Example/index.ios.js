@@ -11,73 +11,79 @@ import {
   Text,
   Image,
   TouchableOpacity,
-  View
+  View,
+  Alert
 } from 'react-native';
-import Scanner from 'react-native-document-scanner';
+import ScannerScreen from '../screens/ScannerScreen';
 
 export default class Example extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      image: null,
-      flashEnabled: false,
-      useFrontCam: false,
+      scannedData: null,
+      showScanner: true
     };
   }
 
-  renderDetectionType() {
-    switch (this.state.lastDetectionType) {
-      case 0:
-        return "Correct rectangle found"
-      case 1:
-        return "Bad angle found";
-      case 2:
-        return "Rectangle too far";
-      default:
-        return "No rectangle detected yet";
-    }
-  }
+  handleScanComplete = (data) => {
+    console.log('Scan completed:', data);
+    this.setState({
+      scannedData: data,
+      showScanner: false
+    });
+    Alert.alert(
+      'Scan Complete!',
+      'Document scanned successfully. Check console for details.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  handleBack = () => {
+    this.setState({ showScanner: false, scannedData: null });
+  };
 
   render() {
+    const { showScanner, scannedData } = this.state;
+
+    if (!showScanner && scannedData) {
+      return (
+        <View style={styles.container}>
+          <View style={styles.resultContainer}>
+            <Text style={styles.title}>Scanned Document</Text>
+            
+            <View style={styles.imageContainer}>
+              <Image 
+                source={{ 
+                  uri: scannedData.croppedImage.startsWith('data:') || scannedData.croppedImage.startsWith('file://')
+                    ? scannedData.croppedImage 
+                    : `data:image/jpeg;base64,${scannedData.croppedImage}`
+                }}
+                style={styles.image}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={styles.info}>
+              Coordinates: {scannedData.rectangleCoordinates ? 'Available' : 'Not available'}
+            </Text>
+
+            <TouchableOpacity 
+              style={styles.button}
+              onPress={() => this.setState({ showScanner: true, scannedData: null })}
+            >
+              <Text style={styles.buttonText}>Scan Another Document</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View style={styles.container}>
-        {this.state.image ?
-          <Image style={{ flex: 1, width: 300, height: 200 }} source={{ uri: `data:image/jpeg;base64,${this.state.image}`}} resizeMode="contain" /> :
-          <Scanner
-            useBase64
-            onPictureTaken={data => this.setState({ image: data.croppedImage })}
-            overlayColor="rgba(255,130,0, 0.7)"
-            enableTorch={this.state.flashEnabled}
-            useFrontCam={this.state.useFrontCam}
-            brightness={0.2}
-            saturation={0}
-            quality={0.5}
-            contrast={1.2}
-            onRectangleDetect={({ stableCounter, lastDetectionType }) => this.setState({ stableCounter, lastDetectionType })}
-            detectionCountBeforeCapture={10}
-            detectionRefreshRateInMS={50}
-            style={styles.scanner}
-          />
-        }
-        <Text style={styles.instructions}>
-          ({this.state.stableCounter || 0} correctly formated rectangle detected
-        </Text>
-        <Text style={styles.instructions}>
-          {this.renderDetectionType()}
-        </Text>
-        {this.state.image === null ?
-          null :
-          <TouchableOpacity style={styles.newPic} onPress={() => this.setState({ image: "" })}>
-            <Text>Take another picture</Text>
-          </TouchableOpacity>
-        }
-
-        <TouchableOpacity style={[styles.button, styles.left]} onPress={() => this.setState({ flashEnabled: !this.state.flashEnabled })}>
-          <Text>📸 Flash</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.right]} onPress={() => this.setState({ useFrontCam: !this.state.useFrontCam })}>
-          <Text>📸 Front Cam</Text>
-        </TouchableOpacity>
+        <ScannerScreen
+          onScanComplete={this.handleScanComplete}
+          onBack={this.handleBack}
+        />
       </View>
     );
   }
@@ -86,49 +92,49 @@ export default class Example extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  resultContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
     backgroundColor: '#F5FCFF',
   },
-  newPic: {
-    height: 100,
-    alignItems: 'center',
-    justifyContent: 'center'
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#333',
+  },
+  imageContainer: {
+    width: '100%',
+    height: 400,
+    backgroundColor: '#000',
+    borderRadius: 10,
+    marginBottom: 20,
+    overflow: 'hidden',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  info: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 20,
   },
   button: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#0066FF',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
     borderRadius: 10,
-    top: 20,
-    bottom: 20,
-    height: 40,
-    width: 120,
-    backgroundColor: '#FFF',
   },
-  left: {
-    left: 20,
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
-  right: {
-    right: 20,
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-  scanner: {
-    flex: 1,
-    width: 400,
-    height: 200,
-    borderColor: 'orange',
-    borderWidth: 1
-  }
 });
 
 AppRegistry.registerComponent('Example', () => Example);

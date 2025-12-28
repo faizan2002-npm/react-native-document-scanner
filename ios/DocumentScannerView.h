@@ -13,5 +13,8 @@
 @property (nonatomic, assign) BOOL saveInAppDocument;
 
 - (void) capture;
+- (NSString *)reapplyPerspectiveCropToImage:(NSString *)base64Image 
+                            withCoordinates:(NSDictionary *)coordinates 
+                                    quality:(float)quality;
 
 @end
