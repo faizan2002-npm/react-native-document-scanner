@@ -1,13 +1,14 @@
 ![Demo gif](https://raw.githubusercontent.com/Michaelvilleneuve/react-native-document-scanner/master/images/demo.gif)
 
-# React Native Document Scanner
+# React Native Painting Scanner
 
-Live document detection library. Returns either a URI or a base64 encoded string of the captured image, allowing you to easily store it or use it as you wish !
+Live painting detection library. Returns either a URI or a base64 encoded string of the captured image, allowing you to easily store it or use it as you wish !
 
 Features :
 
 - Live detection
 - Perspective correction and crop of the image
+- Color preservation (no grayscale conversion)
 - Live camera filters (brightness, saturation, contrast)
 - Flash
 - Easy to use base64 image
@@ -109,7 +110,7 @@ class YourComponent extends Component {
 | overlayColor                |   Both   | `none`  | `string`  | Color of the detected rectangle : rgba recommended                |
 | detectionCountBeforeCapture |   Both   |   `5`   | `integer` | Number of correct rectangle to detect before capture              |
 | detectionRefreshRateInMS    |   iOS    |  `50`   | `integer` | Time between two rectangle detection attempt                      |
-| enableTorch                 |   Both   | `false` |  `bool`   | Allows to active or deactivate flash during document detection    |
+| enableTorch                 |   Both   | `false` |  `bool`   | Allows to active or deactivate flash during painting detection    |
 | useFrontCam                 |   iOS    | `false` |  `bool`   | Allows you to switch between front and back camera                |
 | brightness                  |   iOS    |   `0`   |  `float`  | Increase or decrease camera brightness. Normal as default.        |
 | saturation                  |   iOS    |   `1`   |  `float`  | Increase or decrease camera saturation. Set `0` for black & white |
@@ -144,15 +145,15 @@ The returned object includes the following keys :
 
 - `stableCounter`
 
-Number of correctly formated rectangle found (this number triggers capture once it goes above `detectionCountBeforeCapture`)
+Number of correctly formatted rectangle found (this number triggers capture once it goes above `detectionCountBeforeCapture`)
 
 - `lastDetectionType`
 
 Enum (0, 1 or 2) corresponding to the type of rectangle found
 
-0. Correctly formated rectangle
+0. Correctly formatted rectangle
 1. Wrong perspective, bad angle
-1. Too far
+2. Too far
 
 ## Returned image
 

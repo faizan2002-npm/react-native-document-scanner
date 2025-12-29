@@ -389,7 +389,8 @@ public class ImageProcessor extends Handler {
         int width = Double.valueOf(size.width).intValue();
         int height = Double.valueOf(size.height).intValue();
 
-        int minimumSize = width / 10;
+        // More lenient minimum size for larger paintings
+        int minimumSize = width / 8;
 
         boolean isANormalShape = rp[0].x != rp[1].x && rp[1].y != rp[0].y && rp[2].y != rp[3].y && rp[3].x != rp[2].x;
         boolean isBigEnough = ((rp[1].x - rp[0].x >= minimumSize) && (rp[2].x - rp[3].x >= minimumSize)
@@ -400,17 +401,19 @@ public class ImageProcessor extends Handler {
         double bottomOffset = rp[0].y - rp[1].y;
         double topOffset = rp[2].y - rp[3].y;
 
-        boolean isAnActualRectangle = ((leftOffset <= minimumSize && leftOffset >= -minimumSize)
-                && (rightOffset <= minimumSize && rightOffset >= -minimumSize)
-                && (bottomOffset <= minimumSize && bottomOffset >= -minimumSize)
-                && (topOffset <= minimumSize && topOffset >= -minimumSize));
+        // Increased tolerance for paintings (may not be perfect rectangles)
+        int tolerance = minimumSize * 2;
+        boolean isAnActualRectangle = ((leftOffset <= tolerance && leftOffset >= -tolerance)
+                && (rightOffset <= tolerance && rightOffset >= -tolerance)
+                && (bottomOffset <= tolerance && bottomOffset >= -tolerance)
+                && (topOffset <= tolerance && topOffset >= -tolerance));
 
         return isANormalShape && isAnActualRectangle && isBigEnough;
     }
 
     private void enhanceDocument(Mat src) {
-        Imgproc.cvtColor(src, src, Imgproc.COLOR_RGBA2GRAY);
-        src.convertTo(src, CvType.CV_8UC1, colorGain, colorBias);
+        // Preserve color for paintings - removed grayscale conversion
+        src.convertTo(src, CvType.CV_8UC4, colorGain, colorBias);
     }
 
     /**

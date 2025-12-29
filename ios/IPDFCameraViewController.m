@@ -520,15 +520,16 @@
 }
 
 - (IPDFRectangeType) typeForRectangle: (CIRectangleFeature*) rectangle {
-    if (fabs(rectangle.topRight.y - rectangle.topLeft.y) > 100 ||
-        fabs(rectangle.topRight.x - rectangle.bottomRight.x) > 100 ||
-        fabs(rectangle.topLeft.x - rectangle.bottomLeft.x) > 100 ||
-        fabs(rectangle.bottomLeft.y - rectangle.bottomRight.y) > 100) {
+    // Increased tolerances for paintings (larger objects, may have slight perspective)
+    if (fabs(rectangle.topRight.y - rectangle.topLeft.y) > 175 ||
+        fabs(rectangle.topRight.x - rectangle.bottomRight.x) > 175 ||
+        fabs(rectangle.topLeft.x - rectangle.bottomLeft.x) > 175 ||
+        fabs(rectangle.bottomLeft.y - rectangle.bottomRight.y) > 175) {
         return IPDFRectangeTypeBadAngle;
-    } else if ((_glkView.frame.origin.y + _glkView.frame.size.height) - rectangle.topLeft.y > 150 ||
-               (_glkView.frame.origin.y + _glkView.frame.size.height) - rectangle.topRight.y > 150 ||
-               _glkView.frame.origin.y - rectangle.bottomLeft.y > 150 ||
-               _glkView.frame.origin.y - rectangle.bottomRight.y > 150) {
+    } else if ((_glkView.frame.origin.y + _glkView.frame.size.height) - rectangle.topLeft.y > 225 ||
+               (_glkView.frame.origin.y + _glkView.frame.size.height) - rectangle.topRight.y > 225 ||
+               _glkView.frame.origin.y - rectangle.bottomLeft.y > 225 ||
+               _glkView.frame.origin.y - rectangle.bottomRight.y > 225) {
         return IPDFRectangeTypeTooFar;
     }
     return IPDFRectangeTypeGood;

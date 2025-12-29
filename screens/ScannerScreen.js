@@ -198,7 +198,7 @@ export default class ScannerScreen extends Component {
       case 2:
         return '⚠ Move closer';
       default:
-        return 'Position document in frame';
+        return 'Position painting in frame';
     }
   };
 
