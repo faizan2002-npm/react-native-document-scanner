@@ -15,6 +15,8 @@ import {
 } from 'react-native';
 import DocumentScanner from '../index';
 import { Easing } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,7 +33,8 @@ export default class ScannerScreen extends Component {
       rectangleCoordinates: null,
       showResult: false,
       isProcessing: false,
-      overlayOpacity: new Animated.Value(0)
+      overlayOpacity: new Animated.Value(0),
+      captureButtonScale: new Animated.Value(1)
     };
   }
 
@@ -59,6 +62,20 @@ export default class ScannerScreen extends Component {
 
   capture = () => {
     if (this.scannerRef && this.state.stableCounter > 0) {
+      // Animate button press
+      Animated.sequence([
+        Animated.timing(this.state.captureButtonScale, {
+          toValue: 0.9,
+          duration: 100,
+          useNativeDriver: true
+        }),
+        Animated.timing(this.state.captureButtonScale, {
+          toValue: 1,
+          duration: 100,
+          useNativeDriver: true
+        })
+      ]).start();
+      
       this.scannerRef.capture();
     }
   };
@@ -247,17 +264,23 @@ export default class ScannerScreen extends Component {
                   }
                 }}
               >
-                <Text style={styles.backButtonText}>← Back</Text>
+                <View style={styles.glassmorphicButton}>
+                  <Ionicons name="close" size={25} color="#fff" />
+                </View>
               </TouchableOpacity>
               
-              <TouchableOpacity 
-                style={styles.flashButton}
-                onPress={() => this.setState({ flashEnabled: !flashEnabled })}
-              >
-                <Text style={styles.flashButtonText}>
-                  {flashEnabled ? '⚡ ON' : '⚡ OFF'}
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.headerRight}>
+                <TouchableOpacity 
+                  style={styles.glassmorphicButton}
+                  onPress={() => this.setState({ flashEnabled: !flashEnabled })}
+                >
+                  <Ionicons
+                    name={flashEnabled ? "flash" : "flash-off"}
+                    size={22}
+                    color="#fff"
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           )}
 
@@ -273,20 +296,28 @@ export default class ScannerScreen extends Component {
           {/* Capture Button - Only show when not showing result */}
           {!showResult && (
             <View style={styles.controls}>
-              <TouchableOpacity 
+              <Animated.View
                 style={[
-                  styles.captureButton,
-                  stableCounter > 0 && styles.captureButtonActive
+                  styles.captureButtonContainer,
+                  { transform: [{ scale: this.state.captureButtonScale }] }
                 ]}
-                onPress={this.capture}
-                disabled={stableCounter === 0}
               >
-                <View style={styles.captureButtonInner} />
-              </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[
+                    styles.captureButton,
+                    stableCounter > 0 && styles.captureButtonActive
+                  ]}
+                  onPress={this.capture}
+                  disabled={stableCounter === 0}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.captureButtonInner} />
+                </TouchableOpacity>
+              </Animated.View>
             </View>
           )}
 
-          {/* Result Overlay - Slides in from bottom */}
+          {/* Result Overlay - Slides in from bottom with gradient */}
           {showResult && (
             <Animated.View 
               style={[
@@ -296,70 +327,83 @@ export default class ScannerScreen extends Component {
                   transform: [{
                     translateY: overlayOpacity.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [height * 0.7, 0]
+                      outputRange: [height, 0]
                     })
                   }]
                 }
               ]}
             >
-              {/* Separate Back Button in overlay header */}
-              <TouchableOpacity 
-                style={styles.overlayBackButton}
-                onPress={this.retake}
-              >
-                <Text style={styles.overlayBackButtonText}>← Back</Text>
-              </TouchableOpacity>
-
+              <LinearGradient
+                colors={["#404040", "#555", "#6B6B6B"]}
+                start={{ x: 0.5, y: 0 }}
+                end={{ x: 0.5, y: 1 }}
+                style={StyleSheet.absoluteFill}
+              />
+              
               <View style={styles.resultContainer}>
-                {/* Result Image */}
-                <View style={styles.resultImageContainer}>
-                  <Image 
-                    source={{ 
-                      uri: capturedImage.startsWith('data:') || capturedImage.startsWith('file://') 
-                        ? capturedImage 
-                        : `data:image/jpeg;base64,${capturedImage}`
-                    }}
-                    style={styles.resultImage}
-                    resizeMode="contain"
-                  />
-                  
-                  {/* Loading Indicator */}
-                  {isProcessing && (
-                    <View style={styles.loadingOverlay}>
-                      <ActivityIndicator 
-                        size="large" 
-                        color="#FFFFFF" 
-                      />
-                    </View>
-                  )}
-                </View>
-
-                {/* Action Buttons */}
-                <View style={styles.resultActions}>
+                {/* Top Controls */}
+                <View style={styles.resultHeader}>
                   <TouchableOpacity 
-                    style={[styles.resultButton, styles.retakeButton]}
+                    style={styles.glassmorphicButton}
                     onPress={this.retake}
                   >
-                    <Text style={styles.retakeButtonText}>Retake</Text>
+                    <Ionicons name="chevron-back" size={22} color="#fff" />
                   </TouchableOpacity>
 
                   <TouchableOpacity 
                     style={[
-                      styles.resultButton, 
-                      styles.editButton,
+                      styles.glassmorphicButton,
                       isProcessing && styles.editButtonDisabled
                     ]}
                     onPress={this.editAgain}
                     disabled={isProcessing}
                   >
-                    <Text style={styles.editButtonText}>Edit Again</Text>
+                    <Ionicons name="create-outline" size={22} color="#fff" />
                   </TouchableOpacity>
+                </View>
 
+                {/* Title + Result Image */}
+                <View style={styles.resultContent}>
+                  <Text style={styles.resultTitle}>Looks good?</Text>
+
+                  {/* Result Image */}
+                  <View style={styles.resultImageContainer}>
+                    <Image 
+                      source={{ 
+                        uri: capturedImage.startsWith('data:') || capturedImage.startsWith('file://') 
+                          ? capturedImage 
+                          : `data:image/jpeg;base64,${capturedImage}`
+                      }}
+                      style={styles.resultImage}
+                      resizeMode="contain"
+                    />
+                    
+                    {/* Loading Indicator */}
+                    {isProcessing && (
+                      <View style={styles.loadingOverlay}>
+                        <ActivityIndicator 
+                          size="large" 
+                          color="#FFFFFF" 
+                        />
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.resultActions}>
                   <TouchableOpacity 
-                    style={[styles.resultButton, styles.keepScanButton]}
+                    style={styles.keepScanButton}
                     onPress={this.keepScan}
                   >
                     <Text style={styles.keepScanButtonText}>Keep Scan</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={styles.retakeButton}
+                    onPress={this.retake}
+                  >
+                    <Text style={styles.retakeButtonText}>Retake</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -385,29 +429,37 @@ const styles = StyleSheet.create({
   },
   header: {
     position: 'absolute',
-    top: 0,
+    top: 20,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    // backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 20,
     zIndex: 10
   },
   backButton: {
-    padding: 8
+    // Container for glassmorphic button
   },
-  backButtonText: {
-    color: '#FFF',
-    fontSize: 16
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16
   },
-  flashButton: {
-    padding: 8
-  },
-  flashButtonText: {
-    color: '#FFF',
-    fontSize: 16
+  glassmorphicButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   statusBar: {
     position: 'absolute',
@@ -415,82 +467,99 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 15,
-    backgroundColor: 'rgba(0,0,0,0.7)',
     alignItems: 'center',
     zIndex: 10
   },
   statusText: {
-    color: '#00FF00',
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: '600'
+    fontWeight: '600',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3
   },
   controls: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 40,
     left: 0,
     right: 0,
-    padding: 30,
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 10
   },
+  captureButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#333',
-    borderWidth: 5,
-    borderColor: '#FFF',
+    width: 79,
+    height: 79,
+    borderRadius: 39.5,
+    backgroundColor: '#FFF',
     justifyContent: 'center',
     alignItems: 'center',
     opacity: 0.5
   },
   captureButtonActive: {
-    backgroundColor: '#00FF00',
-    borderColor: '#00FF00',
     opacity: 1
   },
   captureButtonInner: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FFF'
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFF',
+    borderWidth: 2,
+    borderColor: '#E5E5E5'
   },
   resultOverlay: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#1A1A1A',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: height * 0.7,
+    height: height,
     zIndex: 100
-  },
-  overlayBackButton: {
-    position: 'absolute',
-    top: 15,
-    left: 20,
-    zIndex: 101,
-    padding: 8,
-    minWidth: 44,
-    minHeight: 44,
-    justifyContent: 'center'
-  },
-  overlayBackButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16
   },
   resultContainer: {
     flex: 1,
-    paddingTop: 60
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 80,
+    paddingBottom: 64,
+    paddingHorizontal: 32
+  },
+  resultHeader: {
+    position: 'absolute',
+    top: 20,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    zIndex: 101
+  },
+  resultContent: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+    width: '100%'
+  },
+  resultTitle: {
+    color: '#FFF',
+    fontSize: 14,
+    marginBottom: 20,
+    fontWeight: '400'
   },
   resultImageContainer: {
-    height: 300,
-    backgroundColor: '#000',
-    margin: 15,
-    borderRadius: 12,
+    width: width * 0.9,
+    height: width * 0.9,
+    borderRadius: 16,
     overflow: 'hidden',
+    backgroundColor: '#000',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
     justifyContent: 'center',
     alignItems: 'center'
   },
@@ -509,45 +578,45 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   resultActions: {
-    flexDirection: 'row',
-    padding: 15,
-    justifyContent: 'space-between'
+    width: '55%',
+    alignItems: 'center'
   },
-  resultButton: {
-    flex: 1,
-    paddingVertical: 16,
-    borderRadius: 12,
+  keepScanButton: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 999,
+    paddingVertical: 12,
     alignItems: 'center',
-    marginHorizontal: 5
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5
   },
-  retakeButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: '#FFF'
-  },
-  retakeButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+  keepScanButtonText: {
+    color: '#111',
+    fontSize: 14,
     fontWeight: '600'
   },
-  editButton: {
-    backgroundColor: '#00FF00'
+  retakeButton: {
+    width: '100%',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 999,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 20
+  },
+  retakeButtonText: {
+    color: '#111',
+    fontSize: 14,
+    fontWeight: '600'
   },
   editButtonDisabled: {
     opacity: 0.5
-  },
-  editButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold'
-  },
-  keepScanButton: {
-    backgroundColor: '#0066FF'
-  },
-  keepScanButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: 'bold'
   }
 });
 
