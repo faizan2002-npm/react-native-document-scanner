@@ -29,6 +29,20 @@ Edit the `info.plist` file in XCode and add the following permission : `NSCamera
 
 Remember, this library uses your device camera, you can't run it on a simulator.
 
+## Example App
+
+An Expo bare workflow TypeScript example app is included in the `example` directory. To run it:
+
+```bash
+cd example
+npm install
+npx expo prebuild
+cd ios && pod install && cd ..
+npm run ios    # or npm run android
+```
+
+See the [example README](./example/README.md) for detailed setup instructions.
+
 ### Android Only
 
 If you do not have it already in your project, you must link openCV in your `settings.gradle` file
