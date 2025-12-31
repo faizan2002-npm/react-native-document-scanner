@@ -1,19 +1,38 @@
 {
-  "name": "react-native-document-scanner",
+  "name": "react-native-painting-scanner",
   "description": "Scan documents, automatic border detection, automatic crop with modern UI",
   "version": "1.5.0",
   "main": "index.js",
+  "files": [
+    "index.js",
+    "android.js",
+    "android/",
+    "ios/",
+    "screens/",
+    "src/",
+    "react-native-painting-scanner.podspec",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "codegenConfig": {
+    "name": "RNPdfScannerSpec",
+    "type": "modules",
+    "jsSrcsDir": "src",
+    "android": {
+      "javaPackageName": "com.documentscanner"
+    }
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/faizan2002-npm/react-native-document-scanner.git"
+    "url": "https://github.com/faizan2002-npm/react-native-painting-scanner.git"
   },
   "keywords": [
     "react-native",
     "scanner",
-    "document-scanner",
+    "painting-scanner",
     "ios",
     "android",
     "camera",
@@ -24,9 +43,10 @@
   "license": "MIT",
   "peerDependencies": {
     "react": ">=16.0.0",
-    "react-native": ">=0.60.0",
+    "react-native": ">=0.73.0",
     "expo-linear-gradient": "~14.0.0",
-    "@expo/vector-icons": "^14.0.0"
+    "@expo/vector-icons": "^14.0.0",
+    "react-native-safe-area-context": ">=3.0.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.25.0",

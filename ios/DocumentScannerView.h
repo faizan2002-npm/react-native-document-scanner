@@ -1,8 +1,9 @@
 #import "IPDFCameraViewController.h"
-#import <React/RCTViewManager.h>
+#import <React/RCTComponent.h>
 
 @interface DocumentScannerView : IPDFCameraViewController <IPDFCameraViewControllerDelegate>
 
+// Event blocks - used by both architectures (codegen will handle Fabric events)
 @property (nonatomic, copy) RCTDirectEventBlock onPictureTaken;
 @property (nonatomic, copy) RCTDirectEventBlock onRectangleDetect;
 @property (nonatomic, assign) NSInteger detectionCountBeforeCapture;

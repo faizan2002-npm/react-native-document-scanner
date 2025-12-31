@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   StatusBar,
-  SafeAreaView,
   Image,
   Animated,
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {
   NativeModules,
   Dimensions
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import DocumentScanner from '../index';
 import { Easing } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

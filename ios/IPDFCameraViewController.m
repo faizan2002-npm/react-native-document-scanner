@@ -307,7 +307,7 @@
 }
 
 
-- (void)focusAtPoint:(CGPoint)point completionHandler:(void(^)())completionHandler
+- (void)focusAtPoint:(CGPoint)point completionHandler:(void(^)(void))completionHandler
 {
     AVCaptureDevice *device = self.captureDevice;
     CGPoint pointOfInterest = CGPointZero;
@@ -341,7 +341,7 @@
     }
 }
 
-- (void)captureImageWithCompletionHander:(void(^)(id data, id initialData, CIRectangleFeature *rectangleFeature))completionHandler
+- (void)captureImageWithCompletionHander:(void(^)(UIImage *data, UIImage *initialData, CIRectangleFeature *rectangleFeature))completionHandler
 {
     if (_isCapturing) return;
 
@@ -423,7 +423,7 @@
      }];
 }
 
-- (void)hideGLKView:(BOOL)hidden completion:(void(^)())completion
+- (void)hideGLKView:(BOOL)hidden completion:(void(^)(void))completion
 {
     [UIView animateWithDuration:0.1 animations:^
     {

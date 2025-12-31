@@ -1,4 +1,4 @@
-![Demo gif](https://raw.githubusercontent.com/Michaelvilleneuve/react-native-document-scanner/master/images/demo.gif)
+![Demo gif](https://raw.githubusercontent.com/faizan2002-npm/react-native-painting-scanner/master/images/demo.gif)
 
 # React Native Painting Scanner
 
@@ -13,17 +13,15 @@ Features :
 - Flash
 - Easy to use base64 image
 
-#### Can be easily plugged with [react-native-perspective-image-cropper](https://github.com/Michaelvilleneuve/react-native-perspective-image-cropper)
-
-![Demo crop gif](https://camo.githubusercontent.com/0ac887deaa7263172a5fd2759dba3d692e98585a/68747470733a2f2f73332d65752d776573742d312e616d617a6f6e6177732e636f6d2f6d69636861656c76696c6c656e657576652f64656d6f2d63726f702e676966)
+#### Can be easily integrated with perspective image cropping libraries for advanced editing capabilities
 
 ## Both Platform
 
 Use version >=1.4.1 if you are using react-native 0.48+
 
-`$ yarn add https://github.com/Michaelvilleneuve/react-native-document-scanner`
+`$ yarn add react-native-painting-scanner`
 
-`$ react-native link react-native-document-scanner`
+`$ react-native link react-native-painting-scanner`
 
 Edit the `info.plist` file in XCode and add the following permission : `NSCameraUsageDescription`
 
@@ -49,7 +47,7 @@ If you do not have it already in your project, you must link openCV in your `set
 
 ```java
 include ':openCVLibrary310'
-project(':openCVLibrary310').projectDir = new File(rootProject.projectDir,'../node_modules/react-native-document-scanner/android/openCVLibrary310')
+project(':openCVLibrary310').projectDir = new File(rootProject.projectDir,'../node_modules/react-native-painting-scanner/android/openCVLibrary310')
 ```
 
 #### In android/app/src/main/AndroidManifest.xml
@@ -78,7 +76,7 @@ Add Camera permissions request:
 import React, { Component } from "react";
 import { View, Image } from "react-native";
 
-import DocumentScanner from "react-native-document-scanner";
+import DocumentScanner from "react-native-painting-scanner";
 
 class YourComponent extends Component {
   render() {

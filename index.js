@@ -1,17 +1,67 @@
 import React from "react";
 import {
-  requireNativeComponent,
-  NativeModules,
   View,
   Platform,
   PermissionsAndroid,
   DeviceEventEmitter,
-  Text
+  Text,
+  requireNativeComponent,
+  UIManager,
 } from "react-native";
 import PropTypes from "prop-types";
 
-const RNPdfScanner = requireNativeComponent("RNPdfScanner", PdfScanner);
-const CameraManager = NativeModules.RNPdfScannerManager || {};
+// Load native component using requireNativeComponent (works with both old and new architecture)
+const RNPdfScannerComponentInterface = {
+  propTypes: {
+    overlayColor: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    enableTorch: PropTypes.bool,
+    useFrontCam: PropTypes.bool,
+    useBase64: PropTypes.bool,
+    saveInAppDocument: PropTypes.bool,
+    captureMultiple: PropTypes.bool,
+    detectionCountBeforeCapture: PropTypes.number,
+    detectionRefreshRateInMS: PropTypes.number,
+    saturation: PropTypes.number,
+    quality: PropTypes.number,
+    brightness: PropTypes.number,
+    contrast: PropTypes.number,
+    documentAnimation: PropTypes.bool,
+    noGrayScale: PropTypes.bool,
+    manualOnly: PropTypes.bool,
+    onPictureTaken: PropTypes.func,
+    onRectangleDetect: PropTypes.func,
+    ...View.propTypes, // include the default view properties
+  },
+};
+
+const RNPdfScanner = requireNativeComponent('RNPdfScanner', RNPdfScannerComponentInterface);
+
+// Verify view registration (for debugging)
+if (__DEV__) {
+  const viewConfig = UIManager.getViewManagerConfig('RNPdfScanner');
+  if (viewConfig) {
+    console.log('✓ RNPdfScanner view registered successfully:', Object.keys(viewConfig));
+  } else {
+    console.error('✗ RNPdfScanner view NOT registered - check native module name matches');
+  }
+}
+
+// Use TurboModule (new architecture only)
+let NativeRNPdfScannerManager;
+try {
+  const managerSpec = require("./src/NativeRNPdfScannerManager");
+  NativeRNPdfScannerManager = managerSpec && managerSpec.default ? managerSpec.default : null;
+  if (NativeRNPdfScannerManager) {
+    console.log("✓ Using TurboModule for RNPdfScannerManager (new architecture)");
+  } else {
+    console.warn("⚠ TurboModule default export is null or undefined");
+  }
+} catch (e) {
+  console.error("✗ Failed to load TurboModule:", e.message);
+  NativeRNPdfScannerManager = null;
+}
+
+const CameraManager = NativeRNPdfScannerManager || {};
 
 class PdfScanner extends React.Component {
   constructor(props) {
@@ -27,6 +77,11 @@ class PdfScanner extends React.Component {
 
   componentDidMount() {
     this.getAndroidPermissions();
+    if (Platform.OS === "android") {
+      const { onPictureTaken, onProcessing } = this.props;
+      DeviceEventEmitter.addListener("onPictureTaken", onPictureTaken);
+      DeviceEventEmitter.addListener("onProcessingChange", onProcessing);
+    }
   }
 
   async getAndroidPermissions() {
@@ -60,7 +115,17 @@ class PdfScanner extends React.Component {
   };
 
   sendOnPictureTakenEvent(event) {
-    return this.props.onPictureTaken(event.nativeEvent);
+    const nativeEvent = event.nativeEvent;
+    // Reconstruct rectangleCoordinates from flattened values for backward compatibility
+    if (nativeEvent.topLeftX !== undefined) {
+      nativeEvent.rectangleCoordinates = {
+        topLeft: { x: nativeEvent.topLeftX, y: nativeEvent.topLeftY },
+        topRight: { x: nativeEvent.topRightX, y: nativeEvent.topRightY },
+        bottomLeft: { x: nativeEvent.bottomLeftX, y: nativeEvent.bottomLeftY },
+        bottomRight: { x: nativeEvent.bottomRightX, y: nativeEvent.bottomRightY },
+      };
+    }
+    return this.props.onPictureTaken(nativeEvent);
   }
 
   sendOnRectanleDetectEvent(event) {
@@ -75,13 +140,6 @@ class PdfScanner extends React.Component {
     return this.props.quality;
   }
 
-  componentWillMount() {
-    if (Platform.OS === "android") {
-      const { onPictureTaken, onProcessing } = this.props;
-      DeviceEventEmitter.addListener("onPictureTaken", onPictureTaken);
-      DeviceEventEmitter.addListener("onProcessingChange", onProcessing);
-    }
-  }
 
   componentWillUnmount() {
     if (Platform.OS === "android") {
@@ -98,6 +156,8 @@ class PdfScanner extends React.Component {
 
   render() {
     if (!this.state.permissionsAuthorized) return null;
+    
+    // Render the native component
     return (
       <RNPdfScanner
         {...this.props}
@@ -125,6 +185,8 @@ PdfScanner.propTypes = {
   overlayColor: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   enableTorch: PropTypes.bool,
   useFrontCam: PropTypes.bool,
+  useBase64: PropTypes.bool,
+  saveInAppDocument: PropTypes.bool,
   saturation: PropTypes.number,
   brightness: PropTypes.number,
   contrast: PropTypes.number,
@@ -135,7 +197,6 @@ PdfScanner.propTypes = {
   noGrayScale: PropTypes.bool,
   manualOnly: PropTypes.bool,
   captureMultiple: PropTypes.bool,
-  useBase64: PropTypes.bool,
   ...View.propTypes // include the default view properties
 };
 

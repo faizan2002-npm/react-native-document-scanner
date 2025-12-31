@@ -1,113 +1,50 @@
-# Document Scanner Example App
+# Welcome to your Expo app 👋
 
-This is an **Expo bare workflow TypeScript example app** for testing the `react-native-document-scanner` library.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Quick Start
+## Get started
 
-1. **Navigate to example directory:**
-   ```bash
-   cd example
-   ```
+1. Install dependencies
 
-2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-3. **Generate native projects:**
+2. Start the app
+
    ```bash
-   npx expo prebuild
+   npx expo start
    ```
 
-4. **Configure Android (if needed):**
-   - Update `android/settings.gradle` to include OpenCV library
-   - Update `android/app/src/main/AndroidManifest.xml` with camera permissions
-   - See Android setup section below
+In the output, you'll find options to open the app in a
 
-5. **Install iOS pods:**
-   ```bash
-   cd ios && pod install && cd ..
-   ```
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-6. **Run the app:**
-   ```bash
-   # iOS
-   npm run ios
-   
-   # Android
-   npm run android
-   ```
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Android Setup
+## Get a fresh project
 
-After running `expo prebuild`, update the following:
+When you're ready, run:
 
-### 1. Update `android/settings.gradle`
-
-Add the OpenCV library:
-```gradle
-include ':openCVLibrary310'
-project(':openCVLibrary310').projectDir = new File(rootProject.projectDir,'../android/openCVLibrary310')
+```bash
+npm run reset-project
 ```
 
-### 2. Update `android/app/src/main/AndroidManifest.xml`
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-Add `xmlns:tools` to manifest tag:
-```xml
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" 
-         package="com.documentscannerexample" 
-         xmlns:tools="http://schemas.android.com/tools">
-```
+## Learn more
 
-Add `tools:replace="android:allowBackup"` to application tag:
-```xml
-<application 
-    tools:replace="android:allowBackup"
-    ...>
-```
+To learn more about developing your project with Expo, look at the following resources:
 
-Add camera permission:
-```xml
-<uses-permission android:name="android.permission.CAMERA" />
-```
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-### 3. Update `android/app/build.gradle`
+## Join the community
 
-Add OpenCV dependency:
-```gradle
-dependencies {
-    implementation project(':openCVLibrary310')
-    // ... other dependencies
-}
-```
+Join our community of developers creating universal apps.
 
-## iOS Setup
-
-The library should be automatically linked via CocoaPods. Make sure:
-
-1. Camera permission is in `Info.plist` (should be auto-added from `app.json`)
-2. Minimum iOS version is 15.1+
-
-## Features
-
-- ✅ Document scanning with automatic border detection
-- ✅ Manual capture mode
-- ✅ Flash toggle
-- ✅ View scanned documents gallery
-- ✅ Delete scanned documents
-- ✅ TypeScript support with full type definitions
-- ✅ Modern UI with gradient backgrounds
-
-## Requirements
-
-- Node.js v16+
-- React Native 0.74+
-- Expo SDK 51+
-- iOS 15.1+ / Android API 21+
-
-## Notes
-
-- ⚠️ **Test on a real device** - The library requires actual camera hardware (simulators won't work)
-- 📱 Camera permissions are required for both iOS and Android
-- 🔗 The library is linked from parent directory (`file:..`)
-
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

@@ -1,0 +1,53 @@
+# Example app
+example/
+
+# Dependencies
+node_modules/
+
+# Build artifacts
+build/
+dist/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Test files
+*.test.js
+*.spec.js
+__tests__/
+coverage/
+
+# Development files
+.git/
+.gitignore
+.npmignore
+*.md
+!README.md
+
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+*.iml
+local.properties
+
+# iOS
+ios/build/
+ios/Pods/
+*.xcworkspace
+*.xcodeproj/xcuserdata/
+*.xcodeproj/project.xcworkspace/
+
+# Misc
+.env
+.env.local
+
