@@ -34,7 +34,18 @@ const RNPdfScannerComponentInterface = {
   },
 };
 
-const RNPdfScanner = requireNativeComponent('RNPdfScanner', RNPdfScannerComponentInterface);
+// Get view config for new architecture (Fabric) compatibility
+let viewConfig;
+try {
+  viewConfig = UIManager.getViewManagerConfig('RNPdfScanner');
+} catch (e) {
+  viewConfig = null;
+}
+
+// For new architecture, provide view config getter function
+const RNPdfScanner = viewConfig
+  ? requireNativeComponent('RNPdfScanner', RNPdfScannerComponentInterface, () => viewConfig)
+  : requireNativeComponent('RNPdfScanner', RNPdfScannerComponentInterface);
 
 // Verify view registration (for debugging)
 if (__DEV__) {

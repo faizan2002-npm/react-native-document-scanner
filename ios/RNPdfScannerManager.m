@@ -16,7 +16,7 @@ RCT_EXPORT_MODULE(RNPdfScanner)
 
 - (UIView *)view
 {
-    DocumentScannerView *view = [[DocumentScannerView alloc] initWithFrame:CGRectZero];
+    DocumentScannerView *view = [[DocumentScannerView alloc] init];
     return view;
 }
 
